@@ -1,42 +1,29 @@
 from flask import Flask, request, jsonify
-import pickle
 
 app = Flask(__name__)
 
-# Load ML model
-with open('model.pkl', 'rb') as f:
-    model = pickle.load(f)
+@app.route("/")
+def home():
+    return "Gym ML API is running!"
 
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
-    weight = data['weight']
-    height = data['height']
-    age = data['age']
-    activity = data['activity']
+    weight = float(data["weight"])
+    height = float(data["height"]) / 100
+    bmi = weight / (height ** 2)
 
-    bmi = weight / ((height / 100) ** 2)
-    
-    # Dummy category (replace with model logic)
     if bmi < 18.5:
         category = "Underweight"
-        recommendation = "Eat more, gain strength."
     elif 18.5 <= bmi < 25:
-        category = "Normal"
-        recommendation = "Maintain your current lifestyle!"
+        category = "Normal weight"
     elif 25 <= bmi < 30:
         category = "Overweight"
-        recommendation = "Focus on cardio & low-carb diet."
     else:
         category = "Obese"
-        recommendation = "Consult a fitness coach & dietician."
 
-    # If using ML model: prediction = model.predict(...)
-    return jsonify({
-        'bmi': bmi,
-        'category': category,
-        'recommendation': recommendation
-    })
+    return jsonify({"bmi": round(bmi, 2), "category": category})
 
-if __name__ == '__main__':
+# only for local dev; Gunicorn uses `app` directly
+if __name__ == "__main__":
     app.run(debug=True)
